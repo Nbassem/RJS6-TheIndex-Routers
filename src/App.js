@@ -7,6 +7,7 @@ import Sidebar from "./Sidebar";
 import Loading from "./Loading";
 import AuthorsList from "./AuthorsList";
 import AuthorDetail from "./AuthorDetail";
+import BookList from "./BookList";
 
 const instance = axios.create({
   baseURL: "https://the-index-api.herokuapp.com"
@@ -15,17 +16,18 @@ const instance = axios.create({
 class App extends Component {
   state = {
     authors: [],
-    loading: true
+    loading: true,
+    booksLoading: true,
+    books: []
   };
 
-  fetchAllAuthors = async () => {
-    const res = await instance.get("/api/authors/");
-    return res.data;
-  };
-
-  async componentDidMount() {
+  fetchAuthors = async () => {
+    this.setState({
+      loading: true
+    });
     try {
-      const authors = await this.fetchAllAuthors();
+      const res = await instance.get("/api/authors/");
+      let authors = res.data;
       this.setState({
         authors: authors,
         loading: false
@@ -33,6 +35,26 @@ class App extends Component {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  fetchBooks = async () => {
+    this.setState({
+      loading: true
+    });
+    try {
+      const response = await instance.get("/api/books/");
+      let books = response.data;
+      this.setState({
+        books: books,
+        loading: false
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  async componentDidMount() {
+    await this.fetchAuthors();
+    await this.fetchBooks();
   }
 
   getView = () => {
@@ -44,10 +66,14 @@ class App extends Component {
           <Redirect exact from="/" to="/authors" />
           <Route path="/authors/:authorID" component={AuthorDetail} />
           <Route
-            path="/authors/"
+            path="/authors"
             render={props => (
               <AuthorsList {...props} authors={this.state.authors} />
             )}
+          />
+          <Route
+            path="/books"
+            render={props => <BookList {...props} books={this.state.books} />}
           />
         </Switch>
       );
